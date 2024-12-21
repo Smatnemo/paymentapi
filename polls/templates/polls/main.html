@@ -1,0 +1,12 @@
+{% extends "polls/base.html" %}
+
+{% block content %}
+    <p>The answer to your question was {{ num }}</p>
+    {% if num < 30 %}
+    <p>Too low</p>
+    {% elif num > 30 %}
+    <p>Too high</p>
+    {% else %}
+    <p>Correct</p>
+    {% endif %}
+{% endblock %}
