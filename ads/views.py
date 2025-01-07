@@ -1,7 +1,10 @@
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
+from django.db.models import Q
 from django.views import View
+from django.contrib.humanize.templatetags.humanize import naturaltime
+
 from ads.owner import LoginRequiredMixin, OwnerListView, OwnerDetailView, OwnerDeleteView
 from ads.models import Ad, Comment, Fav
 
@@ -13,8 +16,23 @@ class AdListView(OwnerListView):
     template_name = 'ads/ad_list.html'
 
     def get(self, request):
-        ad_list = Ad.objects.all()
+        ad_list = Ad.objects.all().order_by('-updated_at')[:10]
         favorites = list()
+        # For search
+        strval = request.GET.get("search", False)
+        if strval:
+            # Simple title-only search
+            # __icontains for case-insensitive search
+            query = Q(title__icontains=strval)
+            query.add(Q(text__icontains=strval), Q.OR)
+            query.add(Q(tags__name__in=[strval]), Q.OR)
+
+            ad_list = Ad.objects.filter(query).select_related().distinct().order_by('-updated_at')[:10]
+
+        # Augment the ad_list
+        for obj in ad_list:
+            obj.natural_updated = naturaltime(obj.updated_at)
+
         if request.user.is_authenticated:
             # Return a list(QuerySet) of dictionaries showing all the ads that the current user likes
             # rows = [{'ad_id':1},{'ad_id':2}]
@@ -22,7 +40,7 @@ class AdListView(OwnerListView):
             # Convert from a querySet to an actual list of only ids
             # favorites = [1, 2]
             favorites = [row['id'] for row in rows]
-        ctx = {'ad_list':ad_list, 'favorites': favorites }
+        ctx = {'ad_list':ad_list, 'favorites': favorites, 'search':strval }
         return render(request, self.template_name, ctx)
 
 class AdDetailView(OwnerDetailView):
@@ -58,6 +76,10 @@ class AdCreateView(LoginRequiredMixin, View):
         ad = form.save(commit=False)
         ad.owner = self.request.user
         ad.save()
+
+        # https://django-taggit.readthedocs.io/en/latest/forms.html#commit-false
+        form.save_m2m()
+
         return redirect(self.success_url)
 
 class AdUpdateView(LoginRequiredMixin, View):

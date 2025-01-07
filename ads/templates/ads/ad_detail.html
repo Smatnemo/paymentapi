@@ -38,6 +38,19 @@
     {{ ad.text }}
 </p>
 
+
+{% if ad.tags.all %}
+<p>
+    Tags:
+    {% for tag in ad.tags.all %}
+    <span style="border:1px grey solid; background-color: LightGreen;">
+        {{ tag }}
+    </span>
+    {% endfor %}
+</p>
+{% endif %}
+
+
 {% if ad.content_type %}
 <img style="float:right; max-width:50%;" src="{% url 'ads:ad_picture' ad.id %}"
     onclick="document.getElementById('overlay').style.display = 'block' ">
@@ -46,6 +59,7 @@
 <p>
     Price: {{ ad.price }}
 </p>
+
 {% if user.is_authenticated %}
 <br clear="all"/>
 <p>
@@ -58,6 +72,7 @@
     </form>
 </p>
 {% endif %}
+
 {% for comment in comments %}
 <p>
     {{ comment.text }}
@@ -67,6 +82,7 @@
     {% endif %}
 </p>
 {% endfor %}
+
 <p>
     <a href="{% url 'ads:all' %}">All ads</a>
 </p>

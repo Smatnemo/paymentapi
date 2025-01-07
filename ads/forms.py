@@ -18,7 +18,7 @@ class CreateForm(forms.ModelForm):
     # Hint: this will need to be changed for use in the ads application :)
     class Meta:
         model = Ad
-        fields = ['title', 'text', 'picture', 'price']  # Picture is manual
+        fields = ['title', 'text', 'picture', 'price', 'tags']  # Picture is manual
 
     # Validate the size of the picture
     def clean(self):
@@ -31,17 +31,21 @@ class CreateForm(forms.ModelForm):
 
     # Convert uploaded File object to a picture
     def save(self, commit=True):
+        # Never save directly to the database with commit = False
         instance = super(CreateForm, self).save(commit=False)
 
         # We only need to adjust picture if it is a freshly uploaded file
-        f = instance.picture   # Make a copy
-        if isinstance(f, InMemoryUploadedFile):  # Extract data from the form to the model
-            bytearr = f.read()
-            instance.content_type = f.content_type
+        a = instance.picture   # Make a copy
+        if isinstance(a, InMemoryUploadedFile):  # Extract data from the form to the model
+            bytearr = a.read()
+            instance.content_type = a.content_type
             instance.picture = bytearr  # Overwrite with the actual image data
 
         if commit:
             instance.save()
+            # https://django-taggit.readthedocs.io/en/latest/forms.html#commit-false
+            # Tag it has a many to many relationship
+            self.save_m2m() #Add this
 
         return instance
 

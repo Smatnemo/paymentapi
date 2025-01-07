@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 
+from taggit.managers import TaggableManager
+
 # Create your models here.
 class Ad(models.Model):
     title = models.CharField(
@@ -9,6 +11,9 @@ class Ad(models.Model):
             validators=[MinLengthValidator(2, "Title must be greater than 1 character")]
     )
     price = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+
+    # https://django-taggit.readthedocs.io/en/latest/api.html#TaggableManager
+    tags = TaggableManager(blank=True)
 
     # Picture
     picture = models.BinaryField(null=True, blank=True, editable=True)
