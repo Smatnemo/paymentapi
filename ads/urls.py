@@ -10,4 +10,6 @@ urlpatterns = [path('', views.AdListView.as_view(), name='all'),
                path('ad/ad_picture/<int:pk>', views.stream_file, name='ad_picture'),
                path('ad/<int:pk>/comment', views.CommentCreateView.as_view(), name='create_ad_comment'),
                path('comment/<int:pk>/delete', views.CommentDeleteView.as_view(), name='delete_ad_comment'),
+               path('ad/<int:pk>/favorite', views.AddFavoriteView.as_view(), name="ad_favorite"),
+               path('ad/<int:pk>/unfavorite', views.DeleteFavoriteView.as_view(), name='ad_unfavorite'),
             ]

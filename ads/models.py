@@ -15,6 +15,10 @@ class Ad(models.Model):
     content_type = models.CharField(max_length=256, null=True, blank=True,
             help_text='The MIMEType of the file')
 
+    # Favorites
+    favorites = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Fav",
+                    related_name='favorite_ads')
+                    # Calling Ad.favorite_ads returns a list of users that like the ad instance
 
     text = models.TextField()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -43,3 +47,16 @@ class Comment(models.Model):
     def __str__(self):
         if len(self.text) < 15 : return self.text
         return self.text[:11] + ' ...'
+
+class Fav(models.Model):
+    # Fav has a many to one relationship with Ad
+    ad = models.ForeignKey(Ad, on_delete=models.CASCADE)
+    # Fav has a many to one relationship with User
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    class Meta:
+        # only one entry with the same combination can be entered
+        unique_together = ('ad', 'user')
+
+    def __str__(self):
+        return '%s likes %s'%(self.user.username, self.ad.title[:10])

@@ -16,8 +16,12 @@ class AdListView(OwnerListView):
         ad_list = Ad.objects.all()
         favorites = list()
         if request.user.is_authenticated:
+            # Return a list(QuerySet) of dictionaries showing all the ads that the current user likes
+            # rows = [{'ad_id':1},{'ad_id':2}]
             rows = request.user.favorite_ads.values('id')
-            favorites = [ row['id'] for row in rows ]
+            # Convert from a querySet to an actual list of only ids
+            # favorites = [1, 2]
+            favorites = [row['id'] for row in rows]
         ctx = {'ad_list':ad_list, 'favorites': favorites }
         return render(request, self.template_name, ctx)
 
@@ -96,6 +100,37 @@ class CommentDeleteView(OwnerDeleteView):
     def get_success_url(self):
         ad = self.object.ad
         return reverse('ads:ad_detail', args=[ad.id])
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.db.utils import IntegrityError
+
+# Views for adding and removing favorites
+@method_decorator(csrf_exempt, name="dispatch")
+class AddFavoriteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        print("Add PK", pk)
+        a = get_object_or_404(Ad, id=pk)
+        fav = Fav(user=request.user, ad=a)
+        try:
+            fav.save()
+        except IntegrityError:
+            # Because (ad, user) have a unique combination,
+            # integrity error will occur when you try to add
+            # a second record to Fav which already exists before
+            pass
+        return HttpResponse()
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteFavoriteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        print("Delete PK", pk)
+        a = get_object_or_404(Ad, id=pk)
+        try:
+            Fav.objects.get(user=request.user, ad=a).delete()
+        except Fav.DoesNotExist:
+            pass
+        return HttpResponse()
 
 def stream_file(request, pk):
     ad = get_object_or_404(Ad, id=pk)
